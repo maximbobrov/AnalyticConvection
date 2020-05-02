@@ -216,12 +216,27 @@ void get_ur(int i)
 
 void get_ur_2D()
 {
-    for (int j=1;j<NZ-1;j++)
+   /* for cartesian coordinates:
+      for (int j=1;j<NZ-1;j++)
     {
         Ur[0][j]=0.0;
         for(int i=1; i<NR-1; i++)
         {
             Ur[i][j]=Ur[i-1][j]+0.5*dr*((Uz[i][j+1]-Uz[i][j-1])/(2.0*dz)+(Uz[i-1][j+1]-Uz[i-1][j-1])/(2.0*dz));
+        }
+    }*/
+    //for cyllindrical coordinates:
+    for (int j=1;j<NZ-1;j++)
+    {
+        Ur[0][j]=0.0;
+        for(int i=1; i<NR-1; i++)
+        {
+        Ur[i][j]=Ur[i-1][j]- 0.5*dr*((dr*(i))*(Uz[i][j+1]-Uz[i][j-1])/(2.0*dz)+(dr*(i-1))*(Uz[i-1][j+1]-Uz[i-1][j-1])/(2.0*dz));
+        }
+
+        for(int i=1; i<NR-1; i++)
+        {
+        Ur[i][j]/=(i*dr);
         }
     }
 }
@@ -242,14 +257,14 @@ void sweep(int itn,double alpha)
             //  get_ur(i);
             for (int j=1;j<NZ;j++)
             {
-                rhsUz[i][j]=-Om[i][j]/dr*dz*dz -20.0*dz*dz*Ur[i][j]/((i+1)*dr);
+                rhsUz[i][j]=-Om[i][j]/dr*dz*dz -dz*dz*Om[i][j]/((i+1)*dr); //second term is for cyl coords
 
             }
             sweep_imp_gs(i,Uz,itn,rhsUz,alpha,0,0.0);
 
             for (int j=1;j<NZ;j++)
             {
-                rhsB[i][j]=-Uz[i][j]*dz*dz*N*N/k;// -Ur[i][j]/((i+1)*dr);
+                rhsB[i][j]=-Uz[i][j]*dz*dz*N*N/k;
             }
             sweep_imp_gs(i,B,itn,rhsB,alpha,1,bcB[i]);
         }
@@ -257,13 +272,13 @@ void sweep(int itn,double alpha)
         {
             for (int j=1;j<NZ;j++)
             {
-                rhsOm[i][j]=-(B[i][j]-B[i-1][j])/dr*dz*dz/nu;
+                rhsOm[i][j]=Ur[i][j]*Om[i][j]/(dr*(i+1)) - (B[i][j]-B[i-1][j])/dr*dz*dz/nu;
             }
             sweep_imp_gs(i,Om,itn,rhsOm,alpha,0,bcOm[i]);
             // get_ur(i);
             for (int j=1;j<NZ;j++)
             {
-                rhsUz[i][j]=-(Om[i][j]-Om[i-1][j])/dr*dz*dz - 20.0*dz*dz*Ur[i][j]/((i+1)*dr);
+                rhsUz[i][j]=-(Om[i][j]-Om[i-1][j])/dr*dz*dz - dz*dz*Om[i][j]/((i+1)*dr);
             }
             sweep_imp_gs(i,Uz,itn,rhsUz,alpha,0,0.0);
 
