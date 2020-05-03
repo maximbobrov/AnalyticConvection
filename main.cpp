@@ -28,6 +28,7 @@ double dz = 0.1;
 
 bool showOm = false;
 bool showUz = false;
+bool showUr = false;
 bool showB = true;
 bool go = false;
 
@@ -74,8 +75,10 @@ void display(void)
                 glColor3f(ck * B[i][j],-ck * B[i][j],-ck * B[i][j]);
             if(showOm)
                 glColor3f(-ck * Om[i][j],ck * Om[i][j],-ck * Om[i][j]);
-            if(showUz)
+            if(showUr)
                 glColor3f(ck * Ur[i][j],-ck * Ur[i][j],-ck * Ur[i][j]);
+            if(showUz)
+                glColor3f(ck * Uz[i][j],-ck * Uz[i][j],-ck * Uz[i][j]);
 
             glVertex3f( i * dr, j * dz, 0.0);
 
@@ -83,8 +86,10 @@ void display(void)
                 glColor3f(ck * B[i+1][j],-ck * B[i+1][j],-ck * B[i+1][j]);
             if(showOm)
                 glColor3f(-ck * Om[i+1][j],ck * Om[i+1][j],-ck * Om[i+1][j]);
-            if(showUz)
+            if(showUr)
                 glColor3f(ck * Ur[i+1][j],-ck * Ur[i+1][j],-ck * Ur[i+1][j]);
+            if(showUz)
+                glColor3f(ck * Uz[i+1][j],-ck * Uz[i+1][j],-ck * Uz[i+1][j]);
 
             glVertex3f( (i+1) * dr, j * dz, 0.0);
         }
@@ -100,8 +105,8 @@ void display(void)
 
     if(go)
     {
-        for (int i = 0; i< 10 ; i++)
-            sweep(5,0.5);
+        for (int i=0;i<50;i++)
+            sweep(1,0.00005);
         glutPostRedisplay();
     }
 
@@ -117,19 +122,30 @@ void kb(unsigned char key, int x, int y)
         showB = true;
         showOm = false;
         showUz = false;
+        showUr = false;
     }
     if (key=='2')
     {
         showB = false;
         showOm = true;
         showUz = false;
+        showUr = false;
     }
     if (key=='3')
     {
         showB = false;
         showOm = false;
         showUz = true;
+        showUr = false;
     }
+    if (key=='4')
+    {
+        showB = false;
+        showOm = false;
+        showUz = false;
+        showUr = true;
+    }
+
     if (key=='q')
     {
         sc*=1.01;
@@ -157,9 +173,9 @@ void kb(unsigned char key, int x, int y)
     if (key==' ')
     {
         printf(" sweep \n");
-        for (int i=0;i<50;i++)
-            sweep(1,0.001);
-        // go =! go;
+      /*  for (int i=0;i<50;i++)
+            sweep(1,0.001);*/
+         go =! go;
     }
     if (key=='.')
     {
@@ -260,11 +276,11 @@ void sweep(int itn,double alpha)
                 rhsUz[i][j]=-Om[i][j]/dr*dz*dz -dz*dz*Om[i][j]/((i+1)*dr); //second term is for cyl coords
 
             }
-            sweep_imp_gs(i,Uz,itn,rhsUz,alpha,0,0.0);
+            sweep_imp_gs(i,Uz,itn,rhsUz,alpha*0.1,0,0.0);
 
             for (int j=1;j<NZ;j++)
             {
-                rhsB[i][j]=-Uz[i][j]*dz*dz*N*N/k;
+                rhsB[i][j]=-(-Uz[i][j]*dz*dz*N*N/k);
             }
             sweep_imp_gs(i,B,itn,rhsB,alpha,1,bcB[i]);
         }
@@ -272,19 +288,19 @@ void sweep(int itn,double alpha)
         {
             for (int j=1;j<NZ;j++)
             {
-                rhsOm[i][j]=Ur[i][j]*Om[i][j]/(dr*(i+1)) - (B[i][j]-B[i-1][j])/dr*dz*dz/nu;
+                rhsOm[i][j]=-(Ur[i][j]*Om[i][j]/(dr*(i+1))*dz*dz/nu + (B[i][j]-B[i-1][j])/dr*dz*dz/nu);
             }
             sweep_imp_gs(i,Om,itn,rhsOm,alpha,0,bcOm[i]);
             // get_ur(i);
             for (int j=1;j<NZ;j++)
             {
-                rhsUz[i][j]=-(Om[i][j]-Om[i-1][j])/dr*dz*dz - dz*dz*Om[i][j]/((i+1)*dr);
+                rhsUz[i][j]=-dz*dz*((-2.0*Uz[i][j]+Uz[i-1][j]+Uz[i+1][j])/(dr*dr) +  (Om[i][j]-Om[i-1][j])/dr + (Om[i][j]+(Uz[i][j]-Uz[i-1][j])/dr)/((i+1)*dr));
             }
-            sweep_imp_gs(i,Uz,itn,rhsUz,alpha,0,0.0);
+            sweep_imp_gs(i,Uz,itn,rhsUz,alpha*0.1,0,0.0);
 
             for (int j=1;j<NZ;j++)
             {
-                rhsB[i][j]=-Uz[i][j]*dz*dz*N*N/k;
+                rhsB[i][j]=-(-Uz[i][j]*dz*dz*N*N/k);
             }
             sweep_imp_gs(i,B,itn,rhsB,alpha,0,bcB[i]);
         }
